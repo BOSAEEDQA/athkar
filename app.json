@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "أذكار الصباح والمساء",
+    "slug": "athkar-offline",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-font"
+    ],
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "أذكار الصباح والمساء",
+      "shortName": "أذكاري"
+    }
+  }
+}
