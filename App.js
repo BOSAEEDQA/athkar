@@ -43,7 +43,7 @@ function FullPassage({ text, color, preferredSize }) {
       const lines = event.nativeEvent.lines;
       const used = lines.reduce((bottom, line) => Math.max(bottom, line.y + line.height), 0);
       if (available > 0 && used > available + 1) setSize(value => Math.max(16, Math.min(value - 1, Math.floor(value * Math.sqrt(available / used)))));
-    }} style={{ fontFamily: Platform.OS === 'ios' ? 'Geeza Pro' : 'Cairo', fontSize: size, lineHeight: size * 1.65, textAlign: 'justify', writingDirection: 'rtl', color }}>{text.replace(/\n/g, ' ')}</Text>
+    }} style={{ fontFamily: Platform.OS === 'web' ? '"Geeza Pro", GeezaPro, "Times New Roman", serif' : Platform.OS === 'ios' ? 'Geeza Pro' : 'Cairo', fontSize: size, lineHeight: size * 1.65, textAlign: 'justify', writingDirection: 'rtl', color }}>{text.replace(/\n/g, ' ')}</Text>
   </ScrollView>;
 }
 
@@ -333,7 +333,7 @@ function Athkar({ fontError }) {
           <View style={[s.track, { backgroundColor: p.track, marginVertical: 7 }]}><View style={[s.fill, { backgroundColor: p.wine, width: `${completedCount(progress, items) / items.length * 100}%` }]} /></View>
         </View>
         {fullPassage ? <FullPassage text={route.kind === 'evening' ? item.evening ?? item.morning : item.morning} color={p.ink} preferredSize={settings.fontSize} /> : <ScrollView ref={readingScroll} contentContainerStyle={{ paddingHorizontal: 26, paddingBottom: 18, alignItems: 'center' }}>
-          <Text selectable style={{ fontFamily: Platform.OS === 'ios' ? 'Geeza Pro' : 'Cairo', fontSize: settings.fontSize, lineHeight: settings.fontSize * 1.9, textAlign: 'center', writingDirection: 'rtl', color: p.ink }}>{route.kind === 'evening' ? item.evening ?? item.morning : item.morning}</Text>
+          <Text selectable style={{ fontFamily: Platform.OS === 'web' ? '"Geeza Pro", GeezaPro, "Times New Roman", serif' : Platform.OS === 'ios' ? 'Geeza Pro' : 'Cairo', fontSize: settings.fontSize, lineHeight: settings.fontSize * 1.9, textAlign: 'center', writingDirection: 'rtl', color: p.ink }}>{route.kind === 'evening' ? item.evening ?? item.morning : item.morning}</Text>
           {!!item.readingNote && small(item.readingNote, { textAlign: 'center', marginTop: 14 })}
           <View style={[s.sourceButton, { borderColor: p.track }]}>{link('مصدر الذكر', () => setModal({ type: 'source' }))}</View>
         </ScrollView>}
