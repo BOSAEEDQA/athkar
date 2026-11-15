@@ -24,3 +24,10 @@ export function editCounter(counters, id, text) {
   if (!clean) return counters;
   return { ...counters, entries: counters.entries.map(item => item.id === id ? { ...item, text: clean } : item) };
 }
+
+export function browseCounter(counters, step) {
+  if (!step || counters.entries.length < 2) return counters;
+  const index = Math.max(0, counters.entries.findIndex(entry => entry.id === counters.selected));
+  const next = (index + step + counters.entries.length) % counters.entries.length;
+  return { ...counters, selected: counters.entries[next].id };
+}

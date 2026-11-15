@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, useColorScheme, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, AppState, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, useColorScheme, useWindowDimensions } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
@@ -11,9 +11,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import Svg, { Circle } from 'react-native-svg';
 import allItems from './src/adhkar.json';
 import { blankProgress, cities, clamp, completedCount, countFor, dayKey, forSession, increment, initialState, isComplete, kinds, methods, nextIncomplete, nextPrayer, prayers, recentUnfinished, restoreState, sessionKey, started, timeLabel, undo } from './src/core.mjs';
-import { browseDhikr, horizontalSwipe, swipeStep } from './src/navigation.mjs';
+import { browseDhikr } from './src/navigation.mjs';
+import SwipePages from './src/SwipePages';
 import { prayerTimes, completeSession } from './src/core.mjs';
-import { addCounter, changeCounter, editCounter } from './src/custom-counter.mjs';
+import { addCounter, browseCounter, changeCounter, editCounter } from './src/custom-counter.mjs';
 
 
 const palettes = {
@@ -67,13 +68,6 @@ function Athkar({ fontError }) {
   const [backupText, setBackupText] = useState(''), [backupMessage, setBackupMessage] = useState('');
   const [citySearch, setCitySearch] = useState('');
   const timer = useRef(null), locked = useRef(false), readingScroll = useRef(null);
-  const swipeAction = useRef(() => {});
-  const readingPan = useRef(null);
-  if (!readingPan.current) readingPan.current = PanResponder.create({
-    onMoveShouldSetPanResponderCapture: (_, gesture) => horizontalSwipe(gesture),
-    onPanResponderRelease: (_, gesture) => swipeAction.current(swipeStep(gesture)),
-    onPanResponderTerminationRequest: () => true,
-  });
   const settings = data.settings;
   const dark = settings.theme === 'dark' || (settings.theme === 'system' && systemTheme === 'dark');
   const p = palettes[dark ? 'dark' : 'light'];
@@ -161,7 +155,6 @@ function Athkar({ fontError }) {
     setReview(true);
     editProgress(value => browseDhikr(value, items, index, step));
   }
-  swipeAction.current = browse;
   function setPrayer(id, field, value) {
     configure(current => ({ ...current, prayer: { ...current.prayer, [id]: { ...current.prayer[id], [field]: value } } }));
   }
@@ -254,12 +247,8 @@ function Athkar({ fontError }) {
     const counters = data.customCounters;
     const active = counters.entries.find(entry => entry.id === counters.selected);
     const selectedIndex = counters.entries.findIndex(entry => entry.id === counters.selected);
-    const select = step => commit(value => {
-      const current = value.customCounters;
-      const index = current.entries.findIndex(entry => entry.id === current.selected);
-      return { ...value, customCounters: { ...current, selected: current.entries[(index + step + current.entries.length) % current.entries.length].id } };
-    });
-    return <View style={{ flex: 1 }}>
+    const select = step => commit(value => ({ ...value, customCounters: browseCounter(value.customCounters, step) }));
+    return <SwipePages onSwipe={select} disabled={!!modal || counters.entries.length < 2} label="عدّاد أذكارك، اسحب يمينًا أو يسارًا للتنقّل">
       <View style={[s.row, { paddingHorizontal: 16 }]}>
         {iconButton('chevron-forward', 'العودة', back)}
         <View style={{ flex: 1 }} />
@@ -277,11 +266,10 @@ function Athkar({ fontError }) {
         </ScrollView>
         <View style={{ paddingHorizontal: 20, paddingBottom: 12, gap: 4 }}>
           {small('محفوظ حتى تصفّره بنفسك', { textAlign: 'center' })}
-          <View style={s.row}>
-            {counters.entries.length > 1 ? iconButton('chevron-forward', 'الذكر السابق', () => select(-1)) : <View style={{ width: 44 }} />}
-            {small(`${selectedIndex + 1} / ${counters.entries.length}`, { textAlign: 'center' })}
-            {counters.entries.length > 1 ? iconButton('chevron-back', 'الذكر التالي', () => select(1)) : <View style={{ width: 44 }} />}
+          <View style={[s.row, { justifyContent: 'center' }]}>
+            {small(`${selectedIndex + 1} / ${counters.entries.length}`, { textAlign: 'center', writingDirection: 'ltr' })}
           </View>
+          {counters.entries.length > 1 && small('اسحب يمينًا أو يسارًا للتنقّل', { textAlign: 'center' })}
           {link('إضافة ذكر', openCounterEditor)}
         </View>
       </> : <View style={{ flex: 1, justifyContent: 'center', padding: 28, gap: 20 }}>
@@ -289,23 +277,21 @@ function Athkar({ fontError }) {
         {small('أضف أي ذكر، ويبقى عدده محفوظًا حتى تصفّره بنفسك.', { textAlign: 'center' })}
         {button('إضافة ذكر', openCounterEditor)}
       </View>}
-    </View>;
+    </SwipePages>;
   }
 
   function reading() {
     const fullPassage = ['ayat-kursi', 'baqarah-last'].includes(item.id);
     const countValue = countFor(progress, item), radius = height < 720 ? 68 : 82, circumference = 2 * Math.PI * radius, diameter = radius * 2 + 14;
     const name = kinds.find(k => k.id === route.kind).title;
-    if (fullPassage && (!done || transitioning || review)) return <View style={{ flex: 1 }} {...readingPan.current.panHandlers}>
-      {header(name, <View style={s.row}>{iconButton('text-outline', 'حجم الخط', () => setModal({ type: 'font' }))}{iconButton('list-outline', 'قائمة الأذكار', () => setModal({ type: 'list' }))}</View>)}
+    if (fullPassage && (!done || transitioning || review)) return <SwipePages onSwipe={browse} disabled={!!modal} label="صفحات الأذكار، اسحب يمينًا أو يسارًا للتنقّل">
+      {header(name, <View style={[s.row, { justifyContent: 'center' }]}>{iconButton('text-outline', 'حجم الخط', () => setModal({ type: 'font' }))}{iconButton('list-outline', 'قائمة الأذكار', () => setModal({ type: 'list' }))}</View>)}
       <View style={{ paddingHorizontal: 18 }}><View style={[s.track, { backgroundColor: p.track, height: 3, marginVertical: 8 }]}><View style={[s.fill, { backgroundColor: p.wine, width: `${completedCount(progress, items) / items.length * 100}%` }]} /></View></View>
       {prayer && <View style={{ backgroundColor: p.soft, paddingHorizontal: 18, paddingVertical: 5 }}>{label(`${prayer.awaitingIqama ? 'إقامة' : 'صلاة'} ${prayer.title} · ${timeLabel(prayer.awaitingIqama ? prayer.iqamaDate : prayer.date, settings.city.zone)}`, { color: p.wine, fontSize: 14 })}</View>}
       <FullPassage key={item.id} text={route.kind === 'evening' ? item.evening ?? item.morning : item.morning} color={p.ink} preferredSize={settings.fontSize} />
       <View style={{ paddingHorizontal: 18, paddingBottom: 6 }}>
         <View style={s.row}>
-          {iconButton('chevron-forward', 'الذكر السابق', () => browse(-1))}
-          <View style={{ flex: 1 }}>{small(`${index + 1} / ${items.length}`, { textAlign: 'center' })}</View>
-          {iconButton('chevron-back', 'الذكر التالي', () => browse(1))}
+          <View style={{ flex: 1 }}>{small(`${index + 1} / ${items.length}`, { textAlign: 'center', writingDirection: 'ltr' })}{small('اسحب يمينًا أو يسارًا للتنقّل', { textAlign: 'center', fontSize: 12 })}</View>
         </View>
         <View style={[s.row, { borderRadius: 30, backgroundColor: p.soft, paddingHorizontal: 8, paddingVertical: 4, gap: 8 }]}>
           {iconButton('book-outline', 'مصدر الذكر', () => setModal({ type: 'source' }))}
@@ -315,8 +301,8 @@ function Athkar({ fontError }) {
           <Pressable onPress={() => { stopTransition(); setReview(false); editProgress(undo); }} disabled={!progress.history.length} accessibilityRole="button" accessibilityLabel="تراجع عن آخر ضغطة" style={[s.iconButton, { opacity: progress.history.length ? 1 : .35 }]}><Ionicons name="arrow-undo-outline" size={22} color={p.wine} /></Pressable>
         </View>
       </View>
-    </View>;
-    return <View style={{ flex: 1 }} {...readingPan.current.panHandlers}>
+    </SwipePages>;
+    return <SwipePages onSwipe={browse} disabled={!!modal || (done && !review)} label="صفحات الأذكار، اسحب يمينًا أو يسارًا للتنقّل">
       {header(name, <View style={s.row}>{iconButton('text-outline', 'حجم الخط', () => setModal({ type: 'font' }))}{iconButton('list-outline', 'قائمة الأذكار', () => setModal({ type: 'list' }))}</View>)}
       {done && !transitioning && !review ? <ScrollView contentContainerStyle={[s.content, { alignItems: 'center', paddingTop: 60 }]}>
         <Ionicons name="checkmark-circle-outline" color={p.wine} size={76} />
@@ -326,9 +312,7 @@ function Athkar({ fontError }) {
         <View style={{ paddingHorizontal: 25, paddingVertical: fullPassage ? 2 : 14, gap: fullPassage ? 0 : 6 }}>
           {label(titleFor(item, route.kind), { textAlign: 'center', fontSize: 18 }, true)}
           <View style={s.row}>
-            {iconButton('chevron-forward', 'الذكر السابق', () => browse(-1))}
             {small(`${index + 1} من ${items.length}${route.day !== today ? ` · جلسة ${route.day}` : ''}`, { textAlign: 'center' })}
-            {iconButton('chevron-back', 'الذكر التالي', () => browse(1))}
           </View>
           <View style={[s.track, { backgroundColor: p.track, marginVertical: 7 }]}><View style={[s.fill, { backgroundColor: p.wine, width: `${completedCount(progress, items) / items.length * 100}%` }]} /></View>
         </View>
@@ -353,7 +337,7 @@ function Athkar({ fontError }) {
           <View style={[s.row, { alignSelf: 'stretch' }]}>{link('↶ تراجع', () => { stopTransition(); setReview(false); editProgress(undo); }, !progress.history.length)}<View style={{ flex: 1 }} />{small('اسحب يمينًا أو يسارًا للتنقّل', { fontSize: 12 })}</View>
         </View>
       </>}
-    </View>;
+    </SwipePages>;
   }
 
   function prayerControls(id) {
