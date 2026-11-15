@@ -2,7 +2,7 @@
 
 تطبيق شخصي للقراءة والعدّ ومواقيت الصلاة. يعمل دون إنترنت بعد تحميل ملفاته للمرة الأولى.
 
-الرابط: https://BOSAEEDQA.github.io/athkar-offline/
+الرابط: https://BOSAEEDQA.github.io/athkar/
 
 ## التثبيت على الآيفون
 
@@ -33,7 +33,7 @@ npm run build:web
 npm run preview
 ```
 
-المعاينة: `http://127.0.0.1:8787/athkar-offline/`. الناتج `dist/` يعمل على HTTPS أو localhost. يحتوي على manifest وService Worker يخزّن جميع الملفات، بما فيها الخطوط، ويعرض التحديث عند توفره دون مسح البيانات. المسارات نسبية لتعمل تحت مسار GitHub Pages.
+المعاينة: `http://127.0.0.1:8787/athkar/`. الناتج `dist/` يعمل على HTTPS أو localhost. يحتوي على manifest وService Worker يخزّن جميع الملفات، بما فيها الخطوط، ويعرض التحديث عند توفره دون مسح البيانات. المسارات نسبية لتعمل تحت مسار GitHub Pages.
 
 ## النشر
 

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "أذكار الصباح والمساء",
-    "slug": "athkar-offline",
+    "slug": "athkar",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",

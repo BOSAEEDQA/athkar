@@ -6,8 +6,8 @@ const types = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascr
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
-    if (url.pathname === '/athkar-offline') { res.writeHead(302, { Location: '/athkar-offline/' }); res.end(); return; }
-    const requested = decodeURIComponent(url.pathname.replace(/^\/athkar-offline\//, '/'));
+    if (url.pathname === '/athkar') { res.writeHead(302, { Location: '/athkar/' }); res.end(); return; }
+    const requested = decodeURIComponent(url.pathname.replace(/^\/athkar\//, '/'));
     const file = path.resolve(root, '.' + (requested.endsWith('/') ? requested + 'index.html' : requested));
     if (!file.startsWith(root + path.sep)) { res.writeHead(403); res.end(); return; }
     const bytes = await fs.readFile(file);
@@ -15,4 +15,4 @@ const server = http.createServer(async (req, res) => {
     res.end(bytes);
   } catch { res.writeHead(404); res.end('Not found'); }
 });
-server.listen(port, '127.0.0.1', () => console.log(`Preview: http://localhost:${port}/athkar-offline/`));
+server.listen(port, '127.0.0.1', () => console.log(`Preview: http://localhost:${port}/athkar/`));
